@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node --test --test-concurrency=1 dist",
     "migrate": "node dist/db/migrate.js",
     "start": "node dist/server.js"
   },
