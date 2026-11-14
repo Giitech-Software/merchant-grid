@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: merchantgrid
+      POSTGRES_PASSWORD: merchantgrid
+      POSTGRES_DB: merchantgrid
+    ports:
+      - "5432:5432"
+    volumes:
+      - merchantgrid-postgres:/var/lib/postgresql/data
+
+volumes:
+  merchantgrid-postgres:

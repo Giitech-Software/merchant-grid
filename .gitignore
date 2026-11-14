@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.*
+!.env.example
+*.local
+.turbo/
+.DS_Store
+
+# Local infrastructure data
+database/.data/
+backups/
+

@@ -1,0 +1,6 @@
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import type { AccountMappingRepository } from "../repositories/account-mapping-repository.js";
+import { hasPermission } from "../security/request-context.js";
+const schema=z.object({mappingKey:z.enum(["cash","bank","mobile_money","accounts_receivable","accounts_payable","inventory","sales_revenue","cost_of_goods_sold","operating_expenses"]),accountId:z.string().uuid()});
+export function registerAccountMappingRoutes(app:FastifyInstance,repository:AccountMappingRepository):void{app.get("/v1/accounting/account-mappings",async(r,reply)=>{const c=r.requestContext;if(!c)return reply.code(401).send({status:"unauthenticated"});if(!hasPermission(c,"accounting.configure" as never))return reply.code(403).send({status:"forbidden"});return{data:await repository.list(c)};});app.put<{Body:unknown}>("/v1/accounting/account-mappings",async(r,reply)=>{const c=r.requestContext;if(!c)return reply.code(401).send({status:"unauthenticated"});if(!hasPermission(c,"accounting.configure" as never))return reply.code(403).send({status:"forbidden"});const p=schema.safeParse(r.body);if(!p.success)return reply.code(400).send({status:"invalid_request",issues:p.error.flatten()});return{data:await repository.set(c,p.data)};});}

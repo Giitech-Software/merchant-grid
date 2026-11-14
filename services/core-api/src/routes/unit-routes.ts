@@ -1,0 +1,11 @@
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import type { UnitRepository } from "../repositories/unit-repository.js";
+import { hasPermission } from "../security/request-context.js";
+const unitSchema = z.object({ code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(100), symbol: z.string().trim().max(20).optional() });
+const conversionSchema = z.object({ variantId: z.string().uuid(), fromUnitId: z.string().uuid(), toUnitId: z.string().uuid(), multiplier: z.string().regex(/^\d+(\.\d{1,8})?$/).refine((value) => Number(value) > 0), effectiveFrom: z.string().datetime().optional(), effectiveTo: z.string().datetime().optional() }).refine((value) => value.fromUnitId !== value.toUnitId, { message: "Units must be different" });
+export function registerUnitRoutes(app: FastifyInstance, repository: UnitRepository): void {
+  app.get("/v1/catalogue/units", async (request, reply) => { const context = request.requestContext; if (!context) return reply.code(401).send({ status: "unauthenticated" }); if (!hasPermission(context, "product.view")) return reply.code(403).send({ status: "forbidden" }); return { data: await repository.list(context) }; });
+  app.post<{ Body: unknown }>("/v1/catalogue/units", async (request, reply) => { const context = request.requestContext; if (!context) return reply.code(401).send({ status: "unauthenticated" }); if (!hasPermission(context, "product.create")) return reply.code(403).send({ status: "forbidden" }); const parsed = unitSchema.safeParse(request.body); if (!parsed.success) return reply.code(400).send({ status: "invalid_request", issues: parsed.error.flatten() }); return reply.code(201).send({ data: await repository.create(context, parsed.data) }); });
+  app.post<{ Body: unknown }>("/v1/catalogue/unit-conversions", async (request, reply) => { const context = request.requestContext; if (!context) return reply.code(401).send({ status: "unauthenticated" }); if (!hasPermission(context, "product.create")) return reply.code(403).send({ status: "forbidden" }); const parsed = conversionSchema.safeParse(request.body); if (!parsed.success) return reply.code(400).send({ status: "invalid_request", issues: parsed.error.flatten() }); return reply.code(201).send({ data: await repository.createConversion(context, parsed.data) }); });
+}
